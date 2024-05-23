@@ -1,7 +1,7 @@
 const express = require("express");
 const cors = require("cors");
 require("dotenv").config();
-
+const jwt = require("jsonwebtoken");
 const app = express();
 const port = process.env.PORT || 5000;
 
@@ -40,8 +40,16 @@ async function run() {
     const reviewCollection = client.db("bistroDB").collection("reviews");
     const cartCollection = client.db("bistroDB").collection("carts");
 
-    //users related api
+    //jwt related api
+    app.post("/jwt", async (req, res) => {
+      const user = req.body;
+      const token = jwt.sign(user, process.env.ACCESS_TOKEN_SECURE, {
+        expiresIn: "1h",
+      });
+      res.send({ token });
+    });
 
+    //users related api
     app.post("/users", async (req, res) => {
       const user = req.body;
       // insert email if user doesnt exist
@@ -56,7 +64,19 @@ async function run() {
       res.send(result);
     });
 
-    app.get("/users", async (req, res) => {
+    // middleware
+    const verifyToken = (req, res, next) => {
+      console.log("from middleware", req.headers);
+      if (!req.headers.authorization) {
+        return res.status(401).send({ message: "unauthorized access" });
+      }
+      const token = req.headers.authorization.split(" ")[1];
+      console.log(token);
+      next();
+    };
+
+    app.get("/users", verifyToken, async (req, res) => {
+      // console.log(req.headers);
       const result = await userCollection.find().toArray();
       res.send(result);
     });
