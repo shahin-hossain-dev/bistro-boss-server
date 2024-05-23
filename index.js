@@ -49,21 +49,6 @@ async function run() {
       res.send({ token });
     });
 
-    //users related api
-    app.post("/users", async (req, res) => {
-      const user = req.body;
-      // insert email if user doesnt exist
-      // you can do this many way: (1. email unique, 2. upsert, 3. simple checking)
-      const query = { email: user.email };
-      const existUser = await userCollection.findOne(query);
-      // console.log(existUser);
-      if (existUser) {
-        return res.send({ message: "user already exist", insertedId: null });
-      }
-      const result = await userCollection.insertOne(user);
-      res.send(result);
-    });
-
     // middleware
     const verifyToken = (req, res, next) => {
       // console.log("from middleware", req.headers);
@@ -82,9 +67,39 @@ async function run() {
       });
     };
 
+    //users related api
+
     app.get("/users", verifyToken, async (req, res) => {
       // console.log(req.headers);
       const result = await userCollection.find().toArray();
+      res.send(result);
+    });
+
+    app.get("/users/admin/:email", verifyToken, async (req, res) => {
+      const email = req.params.email;
+      if (email !== req.decoded.email) {
+        return res.status(403).send({ message: "forbidden access" });
+      }
+      const query = { email: email };
+      const user = await userCollection.findOne(query);
+      let isAdmin = false;
+      if (user) {
+        isAdmin = user?.role === "admin";
+      }
+      res.send({ isAdmin });
+    });
+
+    app.post("/users", async (req, res) => {
+      const user = req.body;
+      // insert email if user doesnt exist
+      // you can do this many way: (1. email unique, 2. upsert, 3. simple checking)
+      const query = { email: user.email };
+      const existUser = await userCollection.findOne(query);
+      // console.log(existUser);
+      if (existUser) {
+        return res.send({ message: "user already exist", insertedId: null });
+      }
+      const result = await userCollection.insertOne(user);
       res.send(result);
     });
 
