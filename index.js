@@ -43,7 +43,7 @@ async function run() {
     //jwt related api
     app.post("/jwt", async (req, res) => {
       const user = req.body;
-      const token = jwt.sign(user, process.env.ACCESS_TOKEN_SECURE, {
+      const token = jwt.sign(user, process.env.ACCESS_TOKEN_SECRET, {
         expiresIn: "1h",
       });
       res.send({ token });
@@ -66,13 +66,20 @@ async function run() {
 
     // middleware
     const verifyToken = (req, res, next) => {
-      console.log("from middleware", req.headers);
+      // console.log("from middleware", req.headers);
       if (!req.headers.authorization) {
         return res.status(401).send({ message: "unauthorized access" });
       }
       const token = req.headers.authorization.split(" ")[1];
-      console.log(token);
-      next();
+
+      jwt.verify(token, process.env.ACCESS_TOKEN_SECRET, (err, decoded) => {
+        if (err) {
+          return res.status(401).send({ message: "unauthorized access" });
+        }
+        req.decoded = decoded;
+        // console.log("from decoded", req.headers);
+        next();
+      });
     };
 
     app.get("/users", verifyToken, async (req, res) => {
