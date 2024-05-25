@@ -164,7 +164,19 @@ async function run() {
     // update menu item by admin
     app.patch("/menu/:id", async (req, res) => {
       const id = req.params.id;
+      const item = req.body;
       const filter = { _id: new ObjectId(id) };
+      const updateDoc = {
+        $set: {
+          name: item.name,
+          price: item.price,
+          category: item.category,
+          recipe: item.recipe,
+          image: item.image,
+        },
+      };
+      const result = await menuCollection.updateOne(filter, updateDoc);
+      res.send(result);
     });
 
     // delete menu item by admin
