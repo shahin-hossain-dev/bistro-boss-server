@@ -304,6 +304,23 @@ async function run() {
       });
     });
 
+    // order stats
+
+    /**
+     * ------------------
+     * NON-Efficient Way
+     * ------------------
+     * 1. load all the payments
+     * 2. for every menuIds (which is an array), go find items form menu
+     * 3. for every item in the menu collection that you found form amount entry (document )
+     *
+     * -----------------
+     * efficient way
+     * -----------------
+     * 1. aggregation pipeline
+     *
+     */
+
     // Send a ping to confirm a successful connection
     await client.db("admin").command({ ping: 1 });
     console.log(
