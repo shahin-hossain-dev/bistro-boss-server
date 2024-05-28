@@ -258,6 +258,39 @@ async function run() {
       res.send({ paymentResult, deleteResult });
     });
 
+    // stats or analytics
+
+    app.get("/admin-stats", async (req, res) => {
+      const users = await userCollection.estimatedDocumentCount();
+      const menuItems = await menuCollection.estimatedDocumentCount();
+      const orders = await menuCollection.estimatedDocumentCount();
+
+      // this is not the best way
+      // const payments = await paymentCollection.find().toArray();
+      // const revenue = payments.reduce(
+      //   (total, payment) => total + payment.price,
+      //   0
+      // );
+
+      const payments = [
+        {
+          $group: {
+            _id: null, // Group all documents
+            totalPrice: { $sum: "$price" }, // sum of price field
+          },
+        },
+      ];
+      // Execute the aggregation pipeline
+      const revenue = await paymentCollection.aggregate(payments).toArray();
+
+      res.send({
+        users,
+        menuItems,
+        orders,
+        revenue,
+      });
+    });
+
     // Send a ping to confirm a successful connection
     await client.db("admin").command({ ping: 1 });
     console.log(
