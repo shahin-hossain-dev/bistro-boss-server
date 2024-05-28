@@ -272,7 +272,7 @@ async function run() {
       //   0
       // );
 
-      const payments = [
+      /* const payments = [
         {
           $group: {
             _id: null, // Group all documents
@@ -281,7 +281,20 @@ async function run() {
         },
       ];
       // Execute the aggregation pipeline
-      const revenue = await paymentCollection.aggregate(payments).toArray();
+      const revenue = await paymentCollection.aggregate(payments).toArray(); */
+
+      const result = await paymentCollection
+        .aggregate([
+          {
+            $group: {
+              _id: null,
+              totalPrice: { $sum: "$price" },
+            },
+          },
+        ])
+        .toArray();
+
+      const revenue = result.length > 0 ? result[0].totalPrice : 0;
 
       res.send({
         users,
