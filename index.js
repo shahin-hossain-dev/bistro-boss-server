@@ -321,6 +321,54 @@ async function run() {
      *
      */
 
+    //using aggregate pipe line
+
+    app.get("/order-stats", async (req, res) => {
+      const result = await paymentCollection
+        .aggregate([
+          {
+            $unwind: "$menuItemIds", //$unwind menu items ids গুলোকে payments object গুলো থেকে বের করে একটি জায়গায় আলাদা করে, প্রতিটা id কে আলাদা করে object make ফেলবে।
+          },
+          {
+            // Ensure menuItemIds are ObjectId
+            $addFields: {
+              menuItemIdObject: { $toObjectId: "$menuItemIds" },
+            },
+          },
+          // lookup হলো অন্য collection এর মধ্যে সংযোগ করে field অনুযায় data নিয়ে আসা।
+          {
+            $lookup: {
+              from: "menu", // কোন collection থেকে ডাটা আনতে হবে।
+              localField: "menuItemIdObject", // যেমন আমাদের local payment collection এর menuIds এর সাথে মিলিয়ে ডাটা আনতে চাচ্ছি
+              foreignField: "_id", // অর্থাৎ menu collection এর যে field এর সাথে মিলাতে চাচ্ছি।
+              as: "menuItems", // je item er moddhe data gulo pawa jabe. seta holo menuItems
+            },
+          },
+          {
+            $unwind: "$menuItems",
+          },
+          {
+            $group: {
+              _id: "$menuItems.category", //category wise grouping korbe
+              quantity: { $sum: 1 }, //category gulo ak ak kore sum kore felbe
+              revenue: { $sum: "$menuItems.price" },
+            },
+          },
+          {
+            $project: {
+              _id: 0,
+              category: "$_id",
+              quantity: 1,
+              revenue: 1,
+            },
+          },
+        ])
+
+        .toArray();
+
+      res.send(result);
+    });
+
     // Send a ping to confirm a successful connection
     await client.db("admin").command({ ping: 1 });
     console.log(
