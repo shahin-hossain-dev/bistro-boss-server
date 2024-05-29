@@ -34,7 +34,7 @@ const client = new MongoClient(uri, {
 async function run() {
   try {
     // Connect the client to the server	(optional starting in v4.7)
-    await client.connect();
+    // await client.connect();
 
     const userCollection = client.db("bistroDB").collection("users");
     const menuCollection = client.db("bistroDB").collection("menu");
@@ -323,7 +323,7 @@ async function run() {
 
     //using aggregate pipe line
 
-    app.get("/order-stats", async (req, res) => {
+    app.get("/order-stats", verifyToken, verifyAdmin, async (req, res) => {
       const result = await paymentCollection
         .aggregate([
           {
@@ -363,17 +363,16 @@ async function run() {
             },
           },
         ])
-
         .toArray();
 
       res.send(result);
     });
 
     // Send a ping to confirm a successful connection
-    await client.db("admin").command({ ping: 1 });
-    console.log(
-      "Pinged your deployment. You successfully connected to MongoDB!"
-    );
+    // await client.db("admin").command({ ping: 1 });
+    // console.log(
+    //   "Pinged your deployment. You successfully connected to MongoDB!"
+    // );
   } finally {
     // Ensures that the client will close when you finish/error
     // await client.close();
